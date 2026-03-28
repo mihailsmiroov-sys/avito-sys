@@ -376,6 +376,7 @@
         <option value="720">Каждые 12 часов</option>
         <option value="1440">Раз в день</option>
       </select>
+      <div id="schedule-status" style="font-size:9px;color:var(--muted);margin-top:6px;">Автозапуск выключен</div>
     </div>
   </div>
 
@@ -472,7 +473,30 @@ function applySettings(s) {
       b.classList.toggle('active', parseInt(b.dataset.value) === s.limit);
     });
   }
+
+  if (s.autoSchedule !== undefined) {
+    document.getElementById('auto-schedule').value = s.autoSchedule;
+    updateWaScheduleStatus(parseInt(s.autoSchedule));
+  }
 }
+
+function updateWaScheduleStatus(minutes) {
+  const el = document.getElementById('schedule-status');
+  if (!el) return;
+  if (minutes === 0) {
+    el.textContent = 'Автозапуск выключен';
+    el.style.color = 'var(--muted)';
+  } else {
+    const labels = {60: '1 час', 180: '3 часа', 720: '12 часов', 1440: '24 часа'};
+    el.textContent = `✓ Запуск каждые ${labels[minutes] || minutes + ' мин'}`;
+    el.style.color = 'var(--success)';
+  }
+}
+
+// Обновляем статус при смене select
+document.getElementById('auto-schedule').addEventListener('change', () => {
+  updateWaScheduleStatus(parseInt(document.getElementById('auto-schedule').value));
+});
 
 // Пробуем загрузить из Telegram CloudStorage (персистентное хранилище)
 if (tg && tg.CloudStorage) {
