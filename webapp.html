@@ -277,7 +277,7 @@
     <div class="field-group">
       <label class="field-label">Город (пусто — вся Россия)</label>
       <input type="text" id="city" placeholder="kostroma, moskva..." autocomplete="off" />
-      <div id="city-hint" style="font-size:9px;color:var(--muted);margin-top:3px;display:none;">фильтрация по городу в результатах — при углублённом анализе</div>
+      <div id="city-hint" style="font-size:9px;color:var(--muted);margin-top:3px;display:none;">точная фильтрация по городу — при углублённом анализе</div>
     </div>
   </div>
 
@@ -305,7 +305,7 @@
         <div class="t-label">📦 Авито Доставка</div>
         <div class="t-desc">пропускать без доставки</div>
       </div>
-      <label class="toggle"><input type="checkbox" id="filter-delivery" checked><span class="slider"></span></label>
+      <label class="toggle"><input type="checkbox" id="filter-delivery"><span class="slider"></span></label>
     </div>
 
     <div class="toggle-row" data-key="filterRating">
@@ -314,6 +314,14 @@
         <div class="t-desc">пропускать низкий рейтинг</div>
       </div>
       <label class="toggle"><input type="checkbox" id="filter-rating"><span class="slider"></span></label>
+    </div>
+
+    <div class="toggle-row" data-key="deep-analysis">
+      <div class="toggle-info">
+        <div class="t-label">🔎 Углублённый анализ</div>
+        <div class="t-desc">полное описание + проверка доставки</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="deep-analysis" checked><span class="slider"></span></label>
     </div>
 
     <div class="toggle-row" data-key="cheapFirst">
@@ -338,6 +346,39 @@
     </div>
   </div>
 
+  <!-- GEMINI -->
+  <div class="accent-section gemini-sec">
+    <div class="sec-header">
+      <div class="sec-header-left">
+        <span class="badge badge-gemini">✦ GEMINI AI</span>
+        <span class="sec-desc">умная фильтрация</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="use-gemini" checked><span class="slider"></span></label>
+    </div>
+    <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5;">
+      API ключ вводится в расширении Chrome
+    </div>
+  </div>
+
+  <!-- РАСПИСАНИЕ -->
+  <div class="accent-section schedule-sec">
+    <div class="sec-header">
+      <div class="sec-header-left">
+        <span class="badge badge-schedule">⏰ РАСПИСАНИЕ</span>
+        <span class="sec-desc">автозапуск</span>
+      </div>
+    </div>
+    <div style="margin-top:10px;">
+      <select id="auto-schedule">
+        <option value="0">Выключено</option>
+        <option value="60">Каждый час</option>
+        <option value="180">Каждые 3 часа</option>
+        <option value="720">Каждые 12 часов</option>
+        <option value="1440">Раз в день</option>
+      </select>
+    </div>
+  </div>
+
   <!-- ЛИМИТ -->
   <div class="section">
     <div class="section-label">сканирование</div>
@@ -347,55 +388,6 @@
       <div class="limit-btn active" data-value="100">100</div>
       <div class="limit-btn" data-value="200">200</div>
       <div class="limit-btn" data-value="300">300</div>
-    </div>
-  </div>
-
-  <!-- ДОПОЛНИТЕЛЬНО (сворачиваемая) -->
-  <div class="section">
-    <div class="section-label" id="wa-advanced-toggle" style="cursor:pointer;">
-      ⚙ дополнительно <span id="wa-arrow" style="font-size:10px;margin-left:4px;">▼</span>
-    </div>
-    <div id="wa-advanced-body" style="display:none;">
-
-      <div class="toggle-row" data-key="deep-analysis">
-        <div class="toggle-info">
-          <div class="t-label">🔎 Углублённый анализ</div>
-          <div class="t-desc">полное описание + проверка доставки</div>
-        </div>
-        <label class="toggle"><input type="checkbox" id="deep-analysis" checked><span class="slider"></span></label>
-      </div>
-
-      <div class="accent-section gemini-sec" style="margin-top:6px;">
-        <div class="sec-header">
-          <div class="sec-header-left">
-            <span class="badge badge-gemini">✦ GEMINI AI</span>
-            <span class="sec-desc">умная фильтрация</span>
-          </div>
-          <label class="toggle"><input type="checkbox" id="use-gemini" checked><span class="slider"></span></label>
-        </div>
-        <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5;">
-          API ключ вводится в расширении Chrome
-        </div>
-      </div>
-
-      <div class="accent-section schedule-sec" style="margin-top:6px;">
-        <div class="sec-header">
-          <div class="sec-header-left">
-            <span class="badge badge-schedule">⏰ РАСПИСАНИЕ</span>
-            <span class="sec-desc">автозапуск</span>
-          </div>
-        </div>
-        <div style="margin-top:10px;">
-          <select id="auto-schedule">
-            <option value="0">Выключено</option>
-            <option value="60">Каждый час</option>
-            <option value="180">Каждые 3 часа</option>
-            <option value="720">Каждые 12 часов</option>
-            <option value="1440">Раз в день</option>
-          </select>
-        </div>
-      </div>
-
     </div>
   </div>
 
@@ -553,30 +545,11 @@ document.querySelectorAll('.toggle-row').forEach(row => {
 });
 
 // Gemini toggle (без секции ключа — ключ в расширении)
-// Углублённый анализ — при выключении блокируем доставку
+// Углублённый анализ — показываем подсказку к городу, НЕ трогаем доставку
 document.getElementById('deep-analysis').addEventListener('change', function() {
   const on = this.checked;
-  const delivery = document.getElementById('filter-delivery');
   const cityHint = document.getElementById('city-hint');
-  if (!on) {
-    delivery.checked = false;
-    delivery.disabled = true;
-    delivery.closest('.toggle-row').style.opacity = '0.4';
-    if (cityHint) cityHint.style.display = 'block';
-  } else {
-    delivery.disabled = false;
-    delivery.closest('.toggle-row').style.opacity = '1';
-    if (cityHint) cityHint.style.display = 'none';
-  }
-});
-
-// Сворачиваемая секция "Дополнительно"
-document.getElementById('wa-advanced-toggle').addEventListener('click', () => {
-  const body = document.getElementById('wa-advanced-body');
-  const arrow = document.getElementById('wa-arrow');
-  const isOpen = body.style.display !== 'none';
-  body.style.display = isOpen ? 'none' : 'block';
-  arrow.textContent = isOpen ? '▼' : '▲';
+  if (cityHint) cityHint.style.display = on ? 'none' : 'block';
 });
 
 // Применить начальное состояние deep-analysis
