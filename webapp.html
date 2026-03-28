@@ -476,18 +476,26 @@ function applySettings(s) {
   }
 }
 
-// Загрузка настроек при старте через initData
-if (tg && tg.initData) {
-  // Бот может передать настройки через start_param или web_app_data
-  // Но основной путь — Telegram.WebApp.sendData / receiveData не существует
-  // Поэтому настройки передаются через URL параметр или localStorage
+// Пробуем загрузить из Telegram CloudStorage (персистентное хранилище)
+if (tg && tg.CloudStorage) {
+  tg.CloudStorage.getItem('avito_settings', (err, val) => {
+    if (!err && val) {
+      try { applySettings(JSON.parse(val)); } catch(e) {}
+    }
+  });
+  // Загружаем ключ отдельно — он хранится персистентно
+  tg.CloudStorage.getItem('gemini_key', (err, val) => {
+    if (!err && val) {
+      document.getElementById('gemini-key').value = val;
+    }
+  });
+} else {
+  // Fallback: localStorage (для debug без Telegram)
+  try {
+    const saved = localStorage.getItem('avito_settings');
+    if (saved) applySettings(JSON.parse(saved));
+  } catch(e) {}
 }
-
-// Пробуем загрузить из localStorage (бот мог сохранить)
-try {
-  const saved = localStorage.getItem('avito_settings');
-  if (saved) applySettings(JSON.parse(saved));
-} catch(e) {}
 
 // =====================
 // COLLECT SETTINGS
@@ -567,7 +575,16 @@ document.getElementById('btn-run').addEventListener('click', async () => {
     return;
   }
 
-  // Сохраняем в localStorage
+  // Сохраняем в CloudStorage (Telegram) — персистентно
+  if (tg && tg.CloudStorage) {
+    tg.CloudStorage.setItem('avito_settings', JSON.stringify(settings));
+    // Ключ отдельно — чтобы не потерялся
+    if (settings.geminiKey) {
+      tg.CloudStorage.setItem('gemini_key', settings.geminiKey);
+    }
+  }
+
+  // Fallback: localStorage
   try {
     localStorage.setItem('avito_settings', JSON.stringify(settings));
   } catch(e) {}
@@ -581,38 +598,22 @@ document.getElementById('btn-run').addEventListener('click', async () => {
   if (tg && tg.sendData) {
     try {
       tg.sendData(payload);
-      return; // sendData закрывает Mini App
-    } catch(e) {
-      console.log('sendData failed, trying CloudStorage...');
-    }
-  }
-
-  // Способ 2: через Telegram CloudStorage + close
-  if (tg && tg.CloudStorage) {
-    try {
-      tg.CloudStorage.setItem('pending_settings', payload);
-      toast('✅ Настройки сохранены! Запуск...');
-      setTimeout(() => {
-        if (tg.close) tg.close();
-      }, 1000);
       return;
-    } catch(e) {}
+    } catch(e) {
+      console.log('sendData failed, trying close...');
+    }
   }
 
-  // Способ 3: закрываем Mini App и пишем в чат подсказку
+  // Способ 2: закрываем с уведомлением
   if (tg) {
-    // Сохраняем настройки — бот заберёт при следующем /run
-    if (tg.CloudStorage) {
-      tg.CloudStorage.setItem('avito_settings', JSON.stringify(settings));
-    }
-    toast('✅ Настройки сохранены!');
+    toast('✅ Настройки сохранены! Отправь /run боту');
     setTimeout(() => {
       if (tg.close) tg.close();
-    }, 1200);
+    }, 1500);
     return;
   }
 
-  // Fallback: debug mode
+  // Fallback: debug
   console.log('Settings:', settings);
   toast('✅ Сохранено (debug mode)');
 });
