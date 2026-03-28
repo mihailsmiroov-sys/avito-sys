@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Авито Парсер</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f13;
+      --surface: #1a1a22;
+      --surface2: #22222e;
+      --border: #2a2a38;
+      --accent: #00d4aa;
+      --accent-dim: rgba(0,212,170,.12);
+      --accent2: #ff6b35;
+      --text: #e8e8f0;
+      --muted: #6b6b85;
+      --danger: #ff4757;
+      --success: #2ed573;
+      --telegram: #2AABEE;
+    }
+
+    html { background: var(--bg); }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 100px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #13131a 0%, #0d1118 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 20px 14px;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header-row { display: flex; align-items: center; gap: 10px; }
+    .logo {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--accent), #00f0c0);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: #000;
+      box-shadow: 0 2px 12px rgba(0,212,170,.3);
+    }
+    .header-text .title { font-size: 15px; font-weight: 700; letter-spacing: .04em; }
+    .header-text .sub { font-size: 9px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-top: 1px; }
+
+    .status-pill {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 5px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 10px 4px 8px;
+      font-size: 9px; color: var(--muted);
+    }
+    .status-pill .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--muted);
+    }
+    .status-pill.connected .dot { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .status-pill.running .dot { background: var(--accent); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+
+    /* Body */
+    .content { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* Section */
+    .section { }
+    .section-label {
+      font-size: 9px; text-transform: uppercase; letter-spacing: .14em;
+      color: var(--muted); margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* Inputs */
+    label.field-label {
+      display: block; font-size: 10px; color: var(--muted);
+      margin-bottom: 5px; letter-spacing: .04em;
+    }
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      -webkit-appearance: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    input::placeholder { color: var(--muted); }
+    .field-group { margin-bottom: 10px; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Toggle */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 5px;
+      transition: border-color .2s;
+    }
+    .toggle-row.active { border-color: rgba(0,212,170,.3); }
+    .toggle-info .t-label { font-size: 12px; color: var(--text); }
+    .toggle-info .t-desc { font-size: 9px; color: var(--muted); margin-top: 2px; }
+    .toggle {
+      position: relative; width: 38px; height: 22px; flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0;
+      background: var(--border); border-radius: 22px;
+      cursor: pointer; transition: background .25s;
+    }
+    .slider::before {
+      content: ''; position: absolute;
+      width: 16px; height: 16px; left: 3px; top: 3px;
+      background: var(--muted); border-radius: 50%;
+      transition: transform .25s, background .25s;
+    }
+    .toggle input:checked + .slider {
+      background: rgba(0,212,170,.25); border: 1px solid var(--accent);
+    }
+    .toggle input:checked + .slider::before {
+      transform: translateX(16px); background: var(--accent);
+    }
+
+    /* Limit buttons */
+    .limit-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+      margin-top: 6px;
+    }
+    .limit-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 0;
+      color: var(--text); font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all .15s;
+      text-align: center;
+    }
+    .limit-btn.active {
+      border-color: var(--accent); color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .limit-btn:active { transform: scale(.95); }
+
+    /* Schedule select */
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6b85'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+
+    /* Sections with accent border */
+    .accent-section {
+      border-radius: 10px; padding: 12px;
+    }
+    .gemini-sec {
+      background: rgba(66,133,244,.06);
+      border: 1px solid rgba(66,133,244,.2);
+    }
+    .schedule-sec {
+      background: var(--accent-dim);
+      border: 1px solid rgba(0,212,170,.2);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 9px; font-weight: 700;
+      padding: 3px 7px; border-radius: 4px;
+      letter-spacing: .06em;
+    }
+    .badge-gemini { background: #4285f4; color: #fff; }
+    .badge-schedule { background: var(--accent); color: #000; }
+    .sec-header {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .sec-header-left { display: flex; align-items: center; gap: 8px; }
+    .sec-desc { font-size: 9px; color: var(--muted); }
+
+    /* Bottom action */
+    .bottom-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      padding: 12px 16px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+      background: linear-gradient(transparent, var(--bg) 20%);
+      z-index: 20;
+    }
+    .btn-run {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--accent), #00f0c0);
+      border: none; border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px; font-weight: 700;
+      color: #000; letter-spacing: .08em;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,212,170,.3);
+      transition: all .15s;
+    }
+    .btn-run:active { transform: scale(.97); box-shadow: 0 2px 10px rgba(0,212,170,.2); }
+    .btn-run:disabled {
+      background: var(--border); color: var(--muted);
+      box-shadow: none; cursor: not-allowed;
+    }
+
+    /* Key toggle */
+    .key-row { position: relative; }
+    .key-row input { padding-right: 40px; }
+    .key-toggle {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 14px; padding: 4px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+      background: var(--success); color: #000;
+      padding: 8px 18px; border-radius: 8px;
+      font-size: 11px; font-weight: 600;
+      opacity: 0; transition: opacity .3s;
+      z-index: 100; pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+    .toast.error { background: var(--danger); color: #fff; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div class="logo">А</div>
+    <div class="header-text">
+      <div class="title">АВИТО ПАРСЕР</div>
+      <div class="sub">Telegram Mini App</div>
+    </div>
+    <div class="status-pill" id="status-pill">
+      <div class="dot"></div>
+      <span id="status-text">загрузка...</span>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- ПОИСК -->
+  <div class="section">
+    <div class="section-label">поиск</div>
+    <div class="field-group">
+      <label class="field-label">Поисковый запрос</label>
+      <input type="text" id="query" placeholder="iPhone 13 Pro" autocomplete="off" />
+    </div>
+    <div class="field-group">
+      <label class="field-label">Город (пусто — вся Россия)</label>
+      <input type="text" id="city" placeholder="kostroma, moskva..." autocomplete="off" />
+    </div>
+  </div>
+
+  <!-- ЦЕНА -->
+  <div class="section">
+    <div class="section-label">цена</div>
+    <div class="row-2">
+      <div>
+        <label class="field-label">От (₽)</label>
+        <input type="number" id="price-min" placeholder="0" min="0" inputmode="numeric" />
+      </div>
+      <div>
+        <label class="field-label">До (₽)</label>
+        <input type="number" id="price-max" placeholder="999999" min="0" inputmode="numeric" />
+      </div>
+    </div>
+  </div>
+
+  <!-- ФИЛЬТРЫ -->
+  <div class="section">
+    <div class="section-label">фильтры</div>
+
+    <div class="toggle-row" data-key="filterDelivery">
+      <div class="toggle-info">
+        <div class="t-label">📦 Авито Доставка</div>
+        <div class="t-desc">пропускать без доставки</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="filter-delivery" checked><span class="slider"></span></label>
+    </div>
+
+    <div class="toggle-row" data-key="filterReserved">
+      <div class="toggle-info">
+        <div class="t-label">🔒 Забронированные</div>
+        <div class="t-desc">пропускать зарезервированные</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="filter-reserved" checked><span class="slider"></span></label>
+    </div>
+
+    <div class="toggle-row" data-key="filterRating">
+      <div class="toggle-info">
+        <div class="t-label">⭐ Рейтинг от 4.5</div>
+        <div class="t-desc">пропускать низкий рейтинг</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="filter-rating"><span class="slider"></span></label>
+    </div>
+
+    <div class="toggle-row" data-key="deep-analysis">
+      <div class="toggle-info">
+        <div class="t-label">🔎 Углублённый анализ</div>
+        <div class="t-desc">полное описание + проверка доставки</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="deep-analysis" checked><span class="slider"></span></label>
+    </div>
+
+    <div class="field-group" style="margin-top:10px">
+      <label class="field-label">Исключить слова (через запятую)</label>
+      <input type="text" id="exclude-words" placeholder="сломан, неисправен" autocomplete="off" />
+    </div>
+    <div class="field-group">
+      <label class="field-label">Обязательные слова (через запятую)</label>
+      <input type="text" id="include-words" placeholder="128gb" autocomplete="off" />
+    </div>
+  </div>
+
+  <!-- ЛИМИТ -->
+  <div class="section">
+    <div class="section-label">сканирование</div>
+    <label class="field-label">Объявлений для анализа</label>
+    <div class="limit-grid">
+      <div class="limit-btn" data-value="50">50</div>
+      <div class="limit-btn active" data-value="100">100</div>
+      <div class="limit-btn" data-value="200">200</div>
+      <div class="limit-btn" data-value="300">300</div>
+    </div>
+  </div>
+
+  <!-- GEMINI -->
+  <div class="accent-section gemini-sec">
+    <div class="sec-header">
+      <div class="sec-header-left">
+        <span class="badge badge-gemini">✦ GEMINI AI</span>
+        <span class="sec-desc">умная фильтрация</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="use-gemini" checked><span class="slider"></span></label>
+    </div>
+    <div id="gemini-body" style="margin-top:10px;">
+      <label class="field-label">OpenRouter API ключ</label>
+      <div class="key-row">
+        <input type="password" id="gemini-key" placeholder="sk-or-v1-..." autocomplete="off" />
+        <button class="key-toggle" id="key-toggle">👁</button>
+      </div>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5;">
+        Получи бесплатный ключ на openrouter.ai
+      </div>
+    </div>
+  </div>
+
+  <!-- РАСПИСАНИЕ -->
+  <div class="accent-section schedule-sec">
+    <div class="sec-header">
+      <div class="sec-header-left">
+        <span class="badge badge-schedule">⏰ РАСПИСАНИЕ</span>
+        <span class="sec-desc">автозапуск</span>
+      </div>
+    </div>
+    <div style="margin-top:10px;">
+      <select id="auto-schedule">
+        <option value="0">Выключено</option>
+        <option value="60">Каждый час</option>
+        <option value="180">Каждые 3 часа</option>
+        <option value="720">Каждые 12 часов</option>
+        <option value="1440">Раз в день</option>
+      </select>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Bottom button -->
+<div class="bottom-bar">
+  <button class="btn-run" id="btn-run">▶ ЗАПУСТИТЬ ПАРСИНГ</button>
+</div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+
+// Init Telegram WebApp
+if (tg) {
+  tg.ready();
+  tg.expand();
+  // Тема Telegram — оставляем свою тёмную
+  document.documentElement.style.setProperty('--tg-theme-bg-color', '#0f0f13');
+}
+
+// =====================
+// STATE
+// =====================
+
+let currentSettings = {};
+let selectedLimit = 100;
+
+// =====================
+// UI HELPERS
+// =====================
+
+function toast(msg, isError = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => el.className = 'toast', 2000);
+}
+
+function setStatus(text, type) {
+  const pill = document.getElementById('status-pill');
+  const st = document.getElementById('status-text');
+  pill.className = 'status-pill ' + (type || '');
+  st.textContent = text;
+}
+
+// =====================
+// LOAD SETTINGS FROM BOT
+// =====================
+
+function applySettings(s) {
+  if (!s) return;
+  currentSettings = s;
+
+  if (s.query) document.getElementById('query').value = s.query;
+  if (s.city) document.getElementById('city').value = s.city;
+  if (s.priceMin) document.getElementById('price-min').value = s.priceMin;
+  if (s.priceMax && s.priceMax < 999999) document.getElementById('price-max').value = s.priceMax;
+
+  if (s.filterDelivery !== undefined) document.getElementById('filter-delivery').checked = s.filterDelivery;
+  if (s.filterReserved !== undefined) document.getElementById('filter-reserved').checked = s.filterReserved;
+  if (s.filterRating !== undefined) document.getElementById('filter-rating').checked = s.filterRating;
+  if (s['deep-analysis'] !== undefined) document.getElementById('deep-analysis').checked = s['deep-analysis'];
+  if (s.useGemini !== undefined) {
+    document.getElementById('use-gemini').checked = s.useGemini;
+    document.getElementById('gemini-body').style.display = s.useGemini ? 'block' : 'none';
+  }
+
+  if (s.excludeWords && Array.isArray(s.excludeWords)) {
+    document.getElementById('exclude-words').value = s.excludeWords.join(', ');
+  }
+  if (s.includeWords && Array.isArray(s.includeWords)) {
+    document.getElementById('include-words').value = s.includeWords.join(', ');
+  }
+
+  if (s.limit) {
+    selectedLimit = s.limit;
+    document.querySelectorAll('.limit-btn').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.value) === s.limit);
+    });
+  }
+}
+
+// Загрузка настроек при старте через initData
+if (tg && tg.initData) {
+  // Бот может передать настройки через start_param или web_app_data
+  // Но основной путь — Telegram.WebApp.sendData / receiveData не существует
+  // Поэтому настройки передаются через URL параметр или localStorage
+}
+
+// Пробуем загрузить из localStorage (бот мог сохранить)
+try {
+  const saved = localStorage.getItem('avito_settings');
+  if (saved) applySettings(JSON.parse(saved));
+} catch(e) {}
+
+// =====================
+// COLLECT SETTINGS
+// =====================
+
+function collectSettings() {
+  const limit = selectedLimit;
+  const pages = Math.min(Math.ceil(limit / 50), 30);
+
+  return {
+    query: document.getElementById('query').value.trim(),
+    city: document.getElementById('city').value.trim(),
+    priceMin: parseInt(document.getElementById('price-min').value) || 0,
+    priceMax: parseInt(document.getElementById('price-max').value) || 999999,
+    excludeWords: document.getElementById('exclude-words').value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
+    includeWords: document.getElementById('include-words').value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
+    filterDelivery: document.getElementById('filter-delivery').checked,
+    filterReserved: document.getElementById('filter-reserved').checked,
+    filterRating: document.getElementById('filter-rating').checked,
+    minRating: 4.5,
+    useGemini: document.getElementById('use-gemini').checked,
+    'deep-analysis': document.getElementById('deep-analysis').checked,
+    limit,
+    pages,
+    geminiKey: document.getElementById('gemini-key').value.trim(),
+    autoSchedule: parseInt(document.getElementById('auto-schedule').value) || 0,
+  };
+}
+
+// =====================
+// LIMIT BUTTONS
+// =====================
+
+document.querySelectorAll('.limit-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.limit-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedLimit = parseInt(btn.dataset.value);
+  });
+});
+
+// =====================
+// TOGGLE ROWS
+// =====================
+
+document.querySelectorAll('.toggle-row').forEach(row => {
+  const cb = row.querySelector('input[type="checkbox"]');
+  if (cb) {
+    cb.addEventListener('change', () => {
+      row.classList.toggle('active', cb.checked);
+    });
+    if (cb.checked) row.classList.add('active');
+  }
+});
+
+// Gemini toggle
+document.getElementById('use-gemini').addEventListener('change', function() {
+  document.getElementById('gemini-body').style.display = this.checked ? 'block' : 'none';
+});
+
+// Key toggle
+document.getElementById('key-toggle').addEventListener('click', () => {
+  const inp = document.getElementById('gemini-key');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+
+// =====================
+// MAIN BUTTON — SEND TO BOT
+// =====================
+
+document.getElementById('btn-run').addEventListener('click', () => {
+  const settings = collectSettings();
+
+  if (!settings.query) {
+    toast('Введи поисковый запрос!', true);
+    document.getElementById('query').focus();
+    return;
+  }
+
+  // Сохраняем в localStorage
+  try {
+    localStorage.setItem('avito_settings', JSON.stringify(settings));
+  } catch(e) {}
+
+  // Отправляем в Telegram бот
+  if (tg && tg.sendData) {
+    tg.sendData(JSON.stringify({
+      action: 'start',
+      settings: settings
+    }));
+    // sendData закрывает Mini App автоматически
+  } else {
+    // Fallback для отладки без Telegram
+    console.log('Settings:', settings);
+    toast('✅ Настройки сохранены (debug mode)');
+  }
+});
+
+// =====================
+// Telegram MainButton (альтернатива)
+// =====================
+
+if (tg && tg.MainButton) {
+  // Не используем MainButton — у нас свой btn-run
+  // Но можно включить если нужно:
+  // tg.MainButton.setText('▶ ЗАПУСТИТЬ');
+  // tg.MainButton.show();
+}
+
+// =====================
+// HAPTIC FEEDBACK
+// =====================
+
+document.querySelectorAll('.limit-btn, .toggle input, .btn-run').forEach(el => {
+  el.addEventListener('click', () => {
+    if (tg && tg.HapticFeedback) {
+      tg.HapticFeedback.impactOccurred('light');
+    }
+  });
+});
+
+// Status
+setStatus('готов', 'connected');
+</script>
+</body>
+</html>
