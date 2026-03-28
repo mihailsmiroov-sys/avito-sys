@@ -296,7 +296,7 @@
     </div>
   </div>
 
-  <!-- ФИЛЬТРЫ -->
+  <!-- ОСНОВНЫЕ ФИЛЬТРЫ -->
   <div class="section">
     <div class="section-label">фильтры</div>
 
@@ -308,28 +308,12 @@
       <label class="toggle"><input type="checkbox" id="filter-delivery" checked><span class="slider"></span></label>
     </div>
 
-    <div class="toggle-row" data-key="filterReserved">
-      <div class="toggle-info">
-        <div class="t-label">🔒 Зарезервированные</div>
-        <div class="t-desc">пропускать зарезервированные</div>
-      </div>
-      <label class="toggle"><input type="checkbox" id="filter-reserved" checked><span class="slider"></span></label>
-    </div>
-
     <div class="toggle-row" data-key="filterRating">
       <div class="toggle-info">
         <div class="t-label">⭐ Рейтинг от 4.5</div>
         <div class="t-desc">пропускать низкий рейтинг</div>
       </div>
       <label class="toggle"><input type="checkbox" id="filter-rating"><span class="slider"></span></label>
-    </div>
-
-    <div class="toggle-row" data-key="deep-analysis">
-      <div class="toggle-info">
-        <div class="t-label">🔎 Углублённый анализ</div>
-        <div class="t-desc">полное описание + проверка доставки</div>
-      </div>
-      <label class="toggle"><input type="checkbox" id="deep-analysis" checked><span class="slider"></span></label>
     </div>
 
     <div class="toggle-row" data-key="cheapFirst">
@@ -340,13 +324,17 @@
       <label class="toggle"><input type="checkbox" id="cheap-first"><span class="slider"></span></label>
     </div>
 
+    <div class="toggle-row" data-key="onlyNew">
+      <div class="toggle-info">
+        <div class="t-label">🆕 Только новые</div>
+        <div class="t-desc">скрыть ранее найденные</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="only-new"><span class="slider"></span></label>
+    </div>
+
     <div class="field-group" style="margin-top:10px">
       <label class="field-label">Исключить слова (через запятую)</label>
       <input type="text" id="exclude-words" placeholder="сломан, неисправен" autocomplete="off" />
-    </div>
-    <div class="field-group">
-      <label class="field-label">Обязательные слова (через запятую)</label>
-      <input type="text" id="include-words" placeholder="128gb" autocomplete="off" />
     </div>
   </div>
 
@@ -362,36 +350,52 @@
     </div>
   </div>
 
-  <!-- GEMINI -->
-  <div class="accent-section gemini-sec">
-    <div class="sec-header">
-      <div class="sec-header-left">
-        <span class="badge badge-gemini">✦ GEMINI AI</span>
-        <span class="sec-desc">умная фильтрация</span>
-      </div>
-      <label class="toggle"><input type="checkbox" id="use-gemini" checked><span class="slider"></span></label>
+  <!-- ДОПОЛНИТЕЛЬНО (сворачиваемая) -->
+  <div class="section">
+    <div class="section-label" id="wa-advanced-toggle" style="cursor:pointer;">
+      ⚙ дополнительно <span id="wa-arrow" style="font-size:10px;margin-left:4px;">▼</span>
     </div>
-    <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5;">
-      API ключ вводится в расширении Chrome
-    </div>
-  </div>
+    <div id="wa-advanced-body" style="display:none;">
 
-  <!-- РАСПИСАНИЕ -->
-  <div class="accent-section schedule-sec">
-    <div class="sec-header">
-      <div class="sec-header-left">
-        <span class="badge badge-schedule">⏰ РАСПИСАНИЕ</span>
-        <span class="sec-desc">автозапуск</span>
+      <div class="toggle-row" data-key="deep-analysis">
+        <div class="toggle-info">
+          <div class="t-label">🔎 Углублённый анализ</div>
+          <div class="t-desc">полное описание + проверка доставки</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="deep-analysis" checked><span class="slider"></span></label>
       </div>
-    </div>
-    <div style="margin-top:10px;">
-      <select id="auto-schedule">
-        <option value="0">Выключено</option>
-        <option value="60">Каждый час</option>
-        <option value="180">Каждые 3 часа</option>
-        <option value="720">Каждые 12 часов</option>
-        <option value="1440">Раз в день</option>
-      </select>
+
+      <div class="accent-section gemini-sec" style="margin-top:6px;">
+        <div class="sec-header">
+          <div class="sec-header-left">
+            <span class="badge badge-gemini">✦ GEMINI AI</span>
+            <span class="sec-desc">умная фильтрация</span>
+          </div>
+          <label class="toggle"><input type="checkbox" id="use-gemini" checked><span class="slider"></span></label>
+        </div>
+        <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5;">
+          API ключ вводится в расширении Chrome
+        </div>
+      </div>
+
+      <div class="accent-section schedule-sec" style="margin-top:6px;">
+        <div class="sec-header">
+          <div class="sec-header-left">
+            <span class="badge badge-schedule">⏰ РАСПИСАНИЕ</span>
+            <span class="sec-desc">автозапуск</span>
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <select id="auto-schedule">
+            <option value="0">Выключено</option>
+            <option value="60">Каждый час</option>
+            <option value="180">Каждые 3 часа</option>
+            <option value="720">Каждые 12 часов</option>
+            <option value="1440">Раз в день</option>
+          </select>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -455,10 +459,10 @@ function applySettings(s) {
   if (s.priceMax && s.priceMax < 999999) document.getElementById('price-max').value = s.priceMax;
 
   if (s.filterDelivery !== undefined) document.getElementById('filter-delivery').checked = s.filterDelivery;
-  if (s.filterReserved !== undefined) document.getElementById('filter-reserved').checked = s.filterReserved;
   if (s.filterRating !== undefined) document.getElementById('filter-rating').checked = s.filterRating;
   if (s['deep-analysis'] !== undefined) document.getElementById('deep-analysis').checked = s['deep-analysis'];
   if (s.cheapFirst !== undefined) document.getElementById('cheap-first').checked = s.cheapFirst;
+  if (s.onlyNew !== undefined) document.getElementById('only-new').checked = s.onlyNew;
   if (s.useGemini !== undefined) {
     document.getElementById('use-gemini').checked = s.useGemini;
   }
@@ -468,9 +472,6 @@ function applySettings(s) {
 
   if (s.excludeWords && Array.isArray(s.excludeWords)) {
     document.getElementById('exclude-words').value = s.excludeWords.join(', ');
-  }
-  if (s.includeWords && Array.isArray(s.includeWords)) {
-    document.getElementById('include-words').value = s.includeWords.join(', ');
   }
 
   if (s.limit) {
@@ -510,14 +511,15 @@ function collectSettings() {
     priceMin: parseInt(document.getElementById('price-min').value) || 0,
     priceMax: parseInt(document.getElementById('price-max').value) || 999999,
     excludeWords: document.getElementById('exclude-words').value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
-    includeWords: document.getElementById('include-words').value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
+    includeWords: [],
     filterDelivery: document.getElementById('filter-delivery').checked,
-    filterReserved: document.getElementById('filter-reserved').checked,
+    filterReserved: true,
     filterRating: document.getElementById('filter-rating').checked,
     minRating: 4.5,
     useGemini: document.getElementById('use-gemini').checked,
     'deep-analysis': document.getElementById('deep-analysis').checked,
     cheapFirst: document.getElementById('cheap-first').checked,
+    onlyNew: document.getElementById('only-new').checked,
     limit,
     pages,
     autoSchedule: parseInt(document.getElementById('auto-schedule').value) || 0,
@@ -551,27 +553,30 @@ document.querySelectorAll('.toggle-row').forEach(row => {
 });
 
 // Gemini toggle (без секции ключа — ключ в расширении)
-// Углублённый анализ — при выключении блокируем доставку и зарезервированные
+// Углублённый анализ — при выключении блокируем доставку
 document.getElementById('deep-analysis').addEventListener('change', function() {
   const on = this.checked;
   const delivery = document.getElementById('filter-delivery');
-  const reserved = document.getElementById('filter-reserved');
   const cityHint = document.getElementById('city-hint');
   if (!on) {
     delivery.checked = false;
     delivery.disabled = true;
     delivery.closest('.toggle-row').style.opacity = '0.4';
-    reserved.checked = false;
-    reserved.disabled = true;
-    reserved.closest('.toggle-row').style.opacity = '0.4';
     if (cityHint) cityHint.style.display = 'block';
   } else {
     delivery.disabled = false;
     delivery.closest('.toggle-row').style.opacity = '1';
-    reserved.disabled = false;
-    reserved.closest('.toggle-row').style.opacity = '1';
     if (cityHint) cityHint.style.display = 'none';
   }
+});
+
+// Сворачиваемая секция "Дополнительно"
+document.getElementById('wa-advanced-toggle').addEventListener('click', () => {
+  const body = document.getElementById('wa-advanced-body');
+  const arrow = document.getElementById('wa-arrow');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  arrow.textContent = isOpen ? '▼' : '▲';
 });
 
 // Применить начальное состояние deep-analysis
