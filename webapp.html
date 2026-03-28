@@ -558,7 +558,7 @@ document.getElementById('key-toggle').addEventListener('click', () => {
 // MAIN BUTTON — SEND TO BOT
 // =====================
 
-document.getElementById('btn-run').addEventListener('click', () => {
+document.getElementById('btn-run').addEventListener('click', async () => {
   const settings = collectSettings();
 
   if (!settings.query) {
@@ -572,18 +572,49 @@ document.getElementById('btn-run').addEventListener('click', () => {
     localStorage.setItem('avito_settings', JSON.stringify(settings));
   } catch(e) {}
 
-  // Отправляем в Telegram бот
+  const payload = JSON.stringify({
+    action: 'start',
+    settings: settings
+  });
+
+  // Способ 1: sendData (работает только через KeyboardButton)
   if (tg && tg.sendData) {
-    tg.sendData(JSON.stringify({
-      action: 'start',
-      settings: settings
-    }));
-    // sendData закрывает Mini App автоматически
-  } else {
-    // Fallback для отладки без Telegram
-    console.log('Settings:', settings);
-    toast('✅ Настройки сохранены (debug mode)');
+    try {
+      tg.sendData(payload);
+      return; // sendData закрывает Mini App
+    } catch(e) {
+      console.log('sendData failed, trying CloudStorage...');
+    }
   }
+
+  // Способ 2: через Telegram CloudStorage + close
+  if (tg && tg.CloudStorage) {
+    try {
+      tg.CloudStorage.setItem('pending_settings', payload);
+      toast('✅ Настройки сохранены! Запуск...');
+      setTimeout(() => {
+        if (tg.close) tg.close();
+      }, 1000);
+      return;
+    } catch(e) {}
+  }
+
+  // Способ 3: закрываем Mini App и пишем в чат подсказку
+  if (tg) {
+    // Сохраняем настройки — бот заберёт при следующем /run
+    if (tg.CloudStorage) {
+      tg.CloudStorage.setItem('avito_settings', JSON.stringify(settings));
+    }
+    toast('✅ Настройки сохранены!');
+    setTimeout(() => {
+      if (tg.close) tg.close();
+    }, 1200);
+    return;
+  }
+
+  // Fallback: debug mode
+  console.log('Settings:', settings);
+  toast('✅ Сохранено (debug mode)');
 });
 
 // =====================
