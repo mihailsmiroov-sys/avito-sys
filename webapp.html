@@ -277,6 +277,7 @@
     <div class="field-group">
       <label class="field-label">Город (пусто — вся Россия)</label>
       <input type="text" id="city" placeholder="kostroma, moskva..." autocomplete="off" />
+      <div id="city-hint" style="font-size:9px;color:var(--muted);margin-top:3px;display:none;">фильтрация по городу в результатах — при углублённом анализе</div>
     </div>
   </div>
 
@@ -309,7 +310,7 @@
 
     <div class="toggle-row" data-key="filterReserved">
       <div class="toggle-info">
-        <div class="t-label">🔒 Забронированные</div>
+        <div class="t-label">🔒 Зарезервированные</div>
         <div class="t-desc">пропускать зарезервированные</div>
       </div>
       <label class="toggle"><input type="checkbox" id="filter-reserved" checked><span class="slider"></span></label>
@@ -329,6 +330,14 @@
         <div class="t-desc">полное описание + проверка доставки</div>
       </div>
       <label class="toggle"><input type="checkbox" id="deep-analysis" checked><span class="slider"></span></label>
+    </div>
+
+    <div class="toggle-row" data-key="cheapFirst">
+      <div class="toggle-info">
+        <div class="t-label">💰 Сначала дешёвые</div>
+        <div class="t-desc">больше шансов найти мин. цену, но больше мусора</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="cheap-first"><span class="slider"></span></label>
     </div>
 
     <div class="field-group" style="margin-top:10px">
@@ -362,15 +371,8 @@
       </div>
       <label class="toggle"><input type="checkbox" id="use-gemini" checked><span class="slider"></span></label>
     </div>
-    <div id="gemini-body" style="margin-top:10px;">
-      <label class="field-label">OpenRouter API ключ</label>
-      <div class="key-row">
-        <input type="password" id="gemini-key" placeholder="sk-or-v1-..." autocomplete="off" />
-        <button class="key-toggle" id="key-toggle">👁</button>
-      </div>
-      <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5;">
-        Получи бесплатный ключ на openrouter.ai
-      </div>
+    <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5;">
+      API ключ вводится в расширении Chrome
     </div>
   </div>
 
@@ -456,10 +458,13 @@ function applySettings(s) {
   if (s.filterReserved !== undefined) document.getElementById('filter-reserved').checked = s.filterReserved;
   if (s.filterRating !== undefined) document.getElementById('filter-rating').checked = s.filterRating;
   if (s['deep-analysis'] !== undefined) document.getElementById('deep-analysis').checked = s['deep-analysis'];
+  if (s.cheapFirst !== undefined) document.getElementById('cheap-first').checked = s.cheapFirst;
   if (s.useGemini !== undefined) {
     document.getElementById('use-gemini').checked = s.useGemini;
-    document.getElementById('gemini-body').style.display = s.useGemini ? 'block' : 'none';
   }
+
+  // Применить состояние deep-analysis (блокировка зависимых тумблеров)
+  document.getElementById('deep-analysis').dispatchEvent(new Event('change'));
 
   if (s.excludeWords && Array.isArray(s.excludeWords)) {
     document.getElementById('exclude-words').value = s.excludeWords.join(', ');
@@ -481,12 +486,6 @@ if (tg && tg.CloudStorage) {
   tg.CloudStorage.getItem('avito_settings', (err, val) => {
     if (!err && val) {
       try { applySettings(JSON.parse(val)); } catch(e) {}
-    }
-  });
-  // Загружаем ключ отдельно — он хранится персистентно
-  tg.CloudStorage.getItem('gemini_key', (err, val) => {
-    if (!err && val) {
-      document.getElementById('gemini-key').value = val;
     }
   });
 } else {
@@ -518,9 +517,9 @@ function collectSettings() {
     minRating: 4.5,
     useGemini: document.getElementById('use-gemini').checked,
     'deep-analysis': document.getElementById('deep-analysis').checked,
+    cheapFirst: document.getElementById('cheap-first').checked,
     limit,
     pages,
-    geminiKey: document.getElementById('gemini-key').value.trim(),
     autoSchedule: parseInt(document.getElementById('auto-schedule').value) || 0,
   };
 }
@@ -551,16 +550,34 @@ document.querySelectorAll('.toggle-row').forEach(row => {
   }
 });
 
-// Gemini toggle
-document.getElementById('use-gemini').addEventListener('change', function() {
-  document.getElementById('gemini-body').style.display = this.checked ? 'block' : 'none';
+// Gemini toggle (без секции ключа — ключ в расширении)
+// Углублённый анализ — при выключении блокируем доставку и зарезервированные
+document.getElementById('deep-analysis').addEventListener('change', function() {
+  const on = this.checked;
+  const delivery = document.getElementById('filter-delivery');
+  const reserved = document.getElementById('filter-reserved');
+  const cityHint = document.getElementById('city-hint');
+  if (!on) {
+    delivery.checked = false;
+    delivery.disabled = true;
+    delivery.closest('.toggle-row').style.opacity = '0.4';
+    reserved.checked = false;
+    reserved.disabled = true;
+    reserved.closest('.toggle-row').style.opacity = '0.4';
+    if (cityHint) cityHint.style.display = 'block';
+  } else {
+    delivery.disabled = false;
+    delivery.closest('.toggle-row').style.opacity = '1';
+    reserved.disabled = false;
+    reserved.closest('.toggle-row').style.opacity = '1';
+    if (cityHint) cityHint.style.display = 'none';
+  }
 });
 
-// Key toggle
-document.getElementById('key-toggle').addEventListener('click', () => {
-  const inp = document.getElementById('gemini-key');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-});
+// Применить начальное состояние deep-analysis
+if (!document.getElementById('deep-analysis').checked) {
+  document.getElementById('deep-analysis').dispatchEvent(new Event('change'));
+}
 
 // =====================
 // MAIN BUTTON — SEND TO BOT
@@ -578,10 +595,6 @@ document.getElementById('btn-run').addEventListener('click', async () => {
   // Сохраняем в CloudStorage (Telegram) — персистентно
   if (tg && tg.CloudStorage) {
     tg.CloudStorage.setItem('avito_settings', JSON.stringify(settings));
-    // Ключ отдельно — чтобы не потерялся
-    if (settings.geminiKey) {
-      tg.CloudStorage.setItem('gemini_key', settings.geminiKey);
-    }
   }
 
   // Fallback: localStorage
