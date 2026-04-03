@@ -145,7 +145,7 @@
 
     /* Limit buttons */
     .limit-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
       margin-top: 6px;
     }
     .limit-btn {
@@ -371,6 +371,7 @@
     <div style="margin-top:10px;">
       <select id="auto-schedule">
         <option value="0">Выключено</option>
+        <option value="30">Каждые 30 минут</option>
         <option value="60">Каждый час</option>
         <option value="180">Каждые 3 часа</option>
         <option value="720">Каждые 12 часов</option>
@@ -389,6 +390,7 @@
       <div class="limit-btn active" data-value="100">100</div>
       <div class="limit-btn" data-value="200">200</div>
       <div class="limit-btn" data-value="300">300</div>
+      <div class="limit-btn" data-value="500">500</div>
     </div>
   </div>
 
@@ -487,7 +489,7 @@ function updateWaScheduleStatus(minutes) {
     el.textContent = 'Автозапуск выключен';
     el.style.color = 'var(--muted)';
   } else {
-    const labels = {60: '1 час', 180: '3 часа', 720: '12 часов', 1440: '24 часа'};
+    const labels = {30: '30 мин', 60: '1 час', 180: '3 часа', 720: '12 часов', 1440: '24 часа'};
     el.textContent = `✓ Запуск каждые ${labels[minutes] || minutes + ' мин'}`;
     el.style.color = 'var(--success)';
   }
