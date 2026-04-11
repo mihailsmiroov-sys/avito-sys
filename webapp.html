@@ -8,7 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --bg: #0f0f13;
       --surface: #1a1a22;
@@ -21,24 +20,22 @@
       --muted: #6b6b85;
       --danger: #ff4757;
       --success: #2ed573;
-      --telegram: #2AABEE;
     }
-
     html { background: var(--bg); }
     body {
       font-family: 'JetBrains Mono', monospace;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding-bottom: 100px;
+      padding-bottom: 90px;
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Header */
+    /* ─── Header ─── */
     .header {
       background: linear-gradient(135deg, #13131a 0%, #0d1118 100%);
       border-bottom: 1px solid var(--border);
-      padding: 18px 20px 14px;
+      padding: 14px 16px 12px;
       position: sticky; top: 0; z-index: 10;
     }
     .header-row { display: flex; align-items: center; gap: 10px; }
@@ -48,30 +45,68 @@
       border-radius: 6px;
       display: flex; align-items: center; justify-content: center;
       font-size: 14px; font-weight: 700; color: #000;
-      box-shadow: 0 2px 12px rgba(0,212,170,.3);
     }
-    .header-text .title { font-size: 15px; font-weight: 700; letter-spacing: .04em; }
+    .header-text .title { font-size: 14px; font-weight: 700; letter-spacing: .04em; }
     .header-text .sub { font-size: 9px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-top: 1px; }
 
-    .status-pill {
-      margin-left: auto;
+    /* ─── Query Tabs ─── */
+    .tabs-wrap {
+      display: flex; align-items: center; gap: 6px;
+      padding: 12px 16px 0;
+      overflow-x: auto;
+    }
+    .tabs-wrap::-webkit-scrollbar { display: none; }
+    .tab-btn {
       display: flex; align-items: center; gap: 5px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 4px 10px 4px 8px;
-      font-size: 9px; color: var(--muted);
+      border-radius: 8px;
+      padding: 7px 12px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .2s;
+      min-width: 0;
     }
-    .status-pill .dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--muted);
+    .tab-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
     }
-    .status-pill.connected .dot { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .tab-label { max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
+    .tab-close {
+      width: 14px; height: 14px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: color .15s;
+    }
+    .tab-close:hover { color: var(--danger); }
+    .tab-add {
+      width: 32px; height: 32px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: var(--muted);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all .2s;
+    }
+    .tab-add:hover, .tab-add:not([disabled]):active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .tab-add[disabled] { opacity: 0.3; pointer-events: none; }
 
-    /* Body */
-    .content { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+    /* ─── Content ─── */
+    .content { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
 
-    /* Section */
     .section-label {
       font-size: 9px; text-transform: uppercase; letter-spacing: .14em;
       color: var(--muted); margin-bottom: 8px;
@@ -79,7 +114,6 @@
     }
     .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-    /* Inputs */
     label.field-label {
       display: block; font-size: 10px; color: var(--muted);
       margin-bottom: 5px; letter-spacing: .04em;
@@ -105,7 +139,7 @@
     .field-group { margin-bottom: 10px; }
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-    /* Toggle */
+    /* ─── Toggle ─── */
     .toggle-row {
       display: flex; align-items: center; justify-content: space-between;
       padding: 10px 12px;
@@ -118,9 +152,7 @@
     .toggle-row.active { border-color: rgba(0,212,170,.3); }
     .toggle-info .t-label { font-size: 12px; color: var(--text); }
     .toggle-info .t-desc { font-size: 9px; color: var(--muted); margin-top: 2px; }
-    .toggle {
-      position: relative; width: 38px; height: 22px; flex-shrink: 0;
-    }
+    .toggle { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
     .toggle input { opacity: 0; width: 0; height: 0; }
     .slider {
       position: absolute; inset: 0;
@@ -133,33 +165,41 @@
       background: var(--muted); border-radius: 50%;
       transition: transform .25s, background .25s;
     }
-    .toggle input:checked + .slider {
-      background: rgba(0,212,170,.25); border: 1px solid var(--accent);
-    }
-    .toggle input:checked + .slider::before {
-      transform: translateX(16px); background: var(--accent);
-    }
+    .toggle input:checked + .slider { background: rgba(0,212,170,.25); border: 1px solid var(--accent); }
+    .toggle input:checked + .slider::before { transform: translateX(16px); background: var(--accent); }
 
-    /* Limit buttons */
-    .limit-grid {
-      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
-      margin-top: 6px;
-    }
+    /* ─── Limit buttons ─── */
+    .limit-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 6px; }
     .limit-btn {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 8px; padding: 10px 0;
+      border-radius: 8px; padding: 9px 0;
       color: var(--text); font-family: 'JetBrains Mono', monospace;
-      font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: all .15s;
-      text-align: center;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; text-align: center; transition: all .15s;
     }
-    .limit-btn.active {
-      border-color: var(--accent); color: var(--accent);
-      background: var(--accent-dim);
-    }
+    .limit-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
     .limit-btn:active { transform: scale(.95); }
 
-    /* Schedule select */
+    /* ─── Pages buttons ─── */
+    .pages-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 6px; }
+
+    /* ─── Special sections ─── */
+    .accent-section { border-radius: 10px; padding: 12px; }
+    .gemini-sec { background: rgba(66,133,244,.06); border: 1px solid rgba(66,133,244,.2); }
+    .schedule-sec { background: var(--accent-dim); border: 1px solid rgba(0,212,170,.2); }
+    .vless-sec { background: rgba(255,107,53,.06); border: 1px solid rgba(255,107,53,.2); }
+    .badge {
+      display: inline-block;
+      font-size: 9px; font-weight: 700;
+      padding: 3px 7px; border-radius: 4px; letter-spacing: .06em;
+    }
+    .badge-gemini { background: #4285f4; color: #fff; }
+    .badge-schedule { background: var(--accent); color: #000; }
+    .badge-vless { background: #ff6b35; color: #fff; }
+    .sec-header { display: flex; align-items: center; justify-content: space-between; }
+    .sec-header-left { display: flex; align-items: center; gap: 8px; }
+    .sec-desc { font-size: 9px; color: var(--muted); }
+
     select {
       cursor: pointer;
       appearance: none;
@@ -169,37 +209,24 @@
       padding-right: 32px;
     }
 
-    /* Sections with accent border */
-    .accent-section {
-      border-radius: 10px; padding: 12px;
+    /* ─── Divider between per-query and common settings ─── */
+    .section-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
     }
-    .gemini-sec {
-      background: rgba(66,133,244,.06);
-      border: 1px solid rgba(66,133,244,.2);
+    .common-label {
+      font-size: 9px; text-transform: uppercase; letter-spacing: .14em;
+      color: var(--accent); padding: 4px 0 2px;
+      display: flex; align-items: center; gap: 8px;
     }
-    .schedule-sec {
-      background: var(--accent-dim);
-      border: 1px solid rgba(0,212,170,.2);
-    }
-    .badge {
-      display: inline-block;
-      font-size: 9px; font-weight: 700;
-      padding: 3px 7px; border-radius: 4px;
-      letter-spacing: .06em;
-    }
-    .badge-gemini { background: #4285f4; color: #fff; }
-    .badge-schedule { background: var(--accent); color: #000; }
-    .sec-header {
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .sec-header-left { display: flex; align-items: center; gap: 8px; }
-    .sec-desc { font-size: 9px; color: var(--muted); }
+    .common-label::after { content: ''; flex: 1; height: 1px; background: rgba(0,212,170,.2); }
 
-    /* Bottom action */
+    /* ─── Bottom bar ─── */
     .bottom-bar {
       position: fixed; bottom: 0; left: 0; right: 0;
-      padding: 12px 16px;
-      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+      padding: 10px 16px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0));
       background: linear-gradient(transparent, var(--bg) 20%);
       z-index: 20;
     }
@@ -214,9 +241,9 @@
       box-shadow: 0 4px 20px rgba(0,212,170,.3);
       transition: all .15s;
     }
-    .btn-run:active { transform: scale(.97); box-shadow: 0 2px 10px rgba(0,212,170,.2); }
+    .btn-run:active { transform: scale(.97); }
 
-    /* Toast */
+    /* ─── Toast ─── */
     .toast {
       position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
       background: var(--success); color: #000;
@@ -239,17 +266,20 @@
     <div class="logo">А</div>
     <div class="header-text">
       <div class="title">АВИТО ПАРСЕР</div>
-      <div class="sub">Telegram Mini App</div>
-    </div>
-    <div class="status-pill" id="status-pill">
-      <div class="dot"></div>
-      <span id="status-text">загрузка...</span>
+      <div class="sub">v3.0 · Multi-Profile</div>
     </div>
   </div>
 </div>
 
+<!-- Вкладки запросов -->
+<div class="tabs-wrap" id="tabs-wrap">
+  <!-- Вкладки генерируются JS -->
+  <button class="tab-add" id="tab-add-btn" title="Добавить запрос">+</button>
+</div>
+
 <div class="content">
 
+  <!-- ═══ ИНДИВИДУАЛЬНЫЕ НАСТРОЙКИ ЗАПРОСА ═══ -->
   <div class="section">
     <div class="section-label">поиск</div>
     <div class="field-group">
@@ -258,8 +288,7 @@
     </div>
     <div class="field-group">
       <label class="field-label">Город (пусто — вся Россия)</label>
-      <input type="text" id="city" placeholder="kostroma, moskva..." autocomplete="off" />
-      <div id="city-hint" style="font-size:9px;color:var(--muted);margin-top:3px;display:none;">точная фильтрация по городу — при углублённом анализе</div>
+      <input type="text" id="city" placeholder="Москва, kostroma..." autocomplete="off" />
     </div>
   </div>
 
@@ -272,7 +301,7 @@
       </div>
       <div>
         <label class="field-label">До (₽)</label>
-        <input type="number" id="price-max" placeholder="999999" min="0" inputmode="numeric" />
+        <input type="number" id="price-max" placeholder="∞" min="0" inputmode="numeric" />
       </div>
     </div>
   </div>
@@ -280,7 +309,7 @@
   <div class="section">
     <div class="section-label">фильтры</div>
 
-    <div class="toggle-row" data-key="filterDelivery">
+    <div class="toggle-row" id="tr-filterDelivery">
       <div class="toggle-info">
         <div class="t-label">📦 Авито Доставка</div>
         <div class="t-desc">пропускать без доставки</div>
@@ -288,36 +317,28 @@
       <label class="toggle"><input type="checkbox" id="filter-delivery"><span class="slider"></span></label>
     </div>
 
-    <div class="toggle-row" data-key="filterRating">
+    <div class="toggle-row" id="tr-filterRating">
       <div class="toggle-info">
         <div class="t-label">⭐ Рейтинг от 4.5</div>
-        <div class="t-desc">пропускать низкий рейтинг</div>
+        <div class="t-desc">пропускать низкий рейтинг продавца</div>
       </div>
       <label class="toggle"><input type="checkbox" id="filter-rating"><span class="slider"></span></label>
     </div>
 
-    <div class="toggle-row" data-key="deep-analysis">
-      <div class="toggle-info">
-        <div class="t-label">🔎 Углублённый анализ</div>
-        <div class="t-desc">полное описание + проверка доставки</div>
-      </div>
-      <label class="toggle"><input type="checkbox" id="deep-analysis" checked><span class="slider"></span></label>
-    </div>
-
-    <div class="toggle-row" data-key="cheapFirst">
+    <div class="toggle-row" id="tr-cheapFirst">
       <div class="toggle-info">
         <div class="t-label">💰 Сначала дешёвые</div>
-        <div class="t-desc">больше шансов найти мин. цену, но больше мусора</div>
+        <div class="t-desc">сортировка по возрастанию цены</div>
       </div>
       <label class="toggle"><input type="checkbox" id="cheap-first"><span class="slider"></span></label>
     </div>
 
-    <div class="toggle-row" data-key="onlyNew">
+    <div class="toggle-row" id="tr-onlyNew">
       <div class="toggle-info">
         <div class="t-label">🆕 Только новые</div>
         <div class="t-desc">скрыть ранее найденные</div>
       </div>
-      <label class="toggle"><input type="checkbox" id="only-new"><span class="slider"></span></label>
+      <label class="toggle"><input type="checkbox" id="only-new" checked><span class="slider"></span></label>
     </div>
 
     <div class="field-group" style="margin-top:10px">
@@ -326,6 +347,55 @@
     </div>
   </div>
 
+  <div class="section">
+    <div class="section-label">лимит объявлений</div>
+    <div class="limit-grid" id="limit-grid">
+      <button class="limit-btn" data-v="25">25</button>
+      <button class="limit-btn active" data-v="50">50</button>
+      <button class="limit-btn" data-v="100">100</button>
+      <button class="limit-btn" data-v="150">150</button>
+      <button class="limit-btn" data-v="200">200</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">страниц авито</div>
+    <div class="pages-grid" id="pages-grid">
+      <button class="limit-btn" data-v="1">1</button>
+      <button class="limit-btn" data-v="2">2</button>
+      <button class="limit-btn active" data-v="3">3</button>
+      <button class="limit-btn" data-v="5">5</button>
+      <button class="limit-btn" data-v="10">10</button>
+    </div>
+  </div>
+
+  <!-- ═══ ОБЩИЕ НАСТРОЙКИ ═══ -->
+  <div class="section-divider"></div>
+  <div class="common-label">общие настройки</div>
+
+  <div class="toggle-row" id="tr-deepAnalysis">
+    <div class="toggle-info">
+      <div class="t-label">🔎 Углублённый анализ</div>
+      <div class="t-desc">полное описание + проверка доставки (медленнее)</div>
+    </div>
+    <label class="toggle"><input type="checkbox" id="deep-analysis" checked><span class="slider"></span></label>
+  </div>
+
+  <!-- VLESS секция -->
+  <div class="accent-section vless-sec">
+    <div class="sec-header">
+      <div class="sec-header-left">
+        <span class="badge badge-vless">⚡ VLESS</span>
+        <span class="sec-desc">мультипрофильный режим</span>
+      </div>
+      <label class="toggle"><input type="checkbox" id="use-vless" checked><span class="slider"></span></label>
+    </div>
+    <div id="vless-desc" style="font-size:9px;color:var(--muted);margin-top:8px;">
+      5 профилей браузера: прямой IP + 4 VLESS. Настройки в data/proxies.json
+    </div>
+  </div>
+
+  <!-- Gemini AI секция -->
   <div class="accent-section gemini-sec">
     <div class="sec-header">
       <div class="sec-header-left">
@@ -334,249 +404,316 @@
       </div>
       <label class="toggle"><input type="checkbox" id="use-gemini" checked><span class="slider"></span></label>
     </div>
-    
-    <div class="field-group" style="margin-top:12px;">
-      <label class="field-label" style="color: rgba(66,133,244,0.9);">API Ключ OpenRouter (sk-or-...)</label>
-      <input type="text" id="gemini-key" placeholder="Вставь ключ сюда..." autocomplete="off" style="border: 1px solid rgba(66,133,244,0.3); background: rgba(0,0,0,0.2);" />
+    <div class="field-group" style="margin-top:12px;" id="gemini-key-wrap">
+      <label class="field-label" style="color:rgba(66,133,244,0.9)">API Ключ OpenRouter (sk-or-...)</label>
+      <input type="text" id="gemini-key" placeholder="sk-or-v1-..." autocomplete="off"
+             style="font-size:11px;letter-spacing:.02em;" />
+      <div style="font-size:9px;color:var(--muted);margin-top:4px">
+        Бесплатно: <a href="https://openrouter.ai" style="color:rgba(66,133,244,0.8)">openrouter.ai</a>
+      </div>
     </div>
   </div>
 
+  <!-- Расписание -->
   <div class="accent-section schedule-sec">
     <div class="sec-header">
       <div class="sec-header-left">
-        <span class="badge badge-schedule">⏰ РАСПИСАНИЕ</span>
-        <span class="sec-desc">автозапуск парсера</span>
+        <span class="badge badge-schedule">⏰ АВТО</span>
+        <span class="sec-desc">расписание запусков</span>
       </div>
     </div>
-    <div style="margin-top:10px;">
+    <div style="margin-top:10px">
+      <label class="field-label" style="color:rgba(0,212,170,.8)">Интервал автозапуска</label>
       <select id="auto-schedule">
         <option value="0">Выключено</option>
         <option value="30">Каждые 30 минут</option>
         <option value="60">Каждый час</option>
         <option value="180">Каждые 3 часа</option>
         <option value="720">Каждые 12 часов</option>
-        <option value="1440">Раз в день</option>
+        <option value="1440">Каждые 24 часа</option>
       </select>
-      <div id="schedule-status" style="font-size:9px;color:var(--muted);margin-top:6px;">Автозапуск выключен</div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-label">сканирование</div>
-    <label class="field-label">Объявлений для анализа</label>
-    <div class="limit-grid">
-      <div class="limit-btn" data-value="50">50</div>
-      <div class="limit-btn active" data-value="100">100</div>
-      <div class="limit-btn" data-value="200">200</div>
-      <div class="limit-btn" data-value="300">300</div>
-      <div class="limit-btn" data-value="500">500</div>
-    </div>
-  </div>
+</div>
 
+<div class="bottom-bar">
+  <button class="btn-run" id="btn-run">ЗАПУСТИТЬ ПАРСИНГ</button>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<div class="bottom-bar">
-  <button class="btn-run" id="btn-run">▶ СОХРАНИТЬ И ЗАПУСТИТЬ</button>
-</div>
-
 <script>
 const tg = window.Telegram?.WebApp;
-
 if (tg) {
   tg.ready();
   tg.expand();
-  document.documentElement.style.setProperty('--tg-theme-bg-color', '#0f0f13');
+  tg.disableClosingConfirmation?.();
 }
 
-let currentSettings = {};
-let selectedLimit = 100;
+// ─── Состояние ───────────────────────────────────────────────────────────────
+const MAX_TABS = 3;
 
-function toast(msg, isError = false) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast show' + (isError ? ' error' : '');
-  setTimeout(() => el.className = 'toast', 2000);
-}
-
-function setStatus(text, type) {
-  const pill = document.getElementById('status-pill');
-  const st = document.getElementById('status-text');
-  pill.className = 'status-pill ' + (type || '');
-  st.textContent = text;
-}
-
-function applySettings(s) {
-  if (!s) return;
-  currentSettings = s;
-
-  if (s.query) document.getElementById('query').value = s.query;
-  if (s.city) document.getElementById('city').value = s.city;
-  if (s.priceMin) document.getElementById('price-min').value = s.priceMin;
-  if (s.priceMax && s.priceMax < 999999) document.getElementById('price-max').value = s.priceMax;
-  if (s.geminiKey) document.getElementById('gemini-key').value = s.geminiKey;
-
-  if (s.filterDelivery !== undefined) document.getElementById('filter-delivery').checked = s.filterDelivery;
-  if (s.filterRating !== undefined) document.getElementById('filter-rating').checked = s.filterRating;
-  
-  // КРИТИЧЕСКИЙ ФИКС: Поддержка обоих вариантов написания (deep-analysis и deep_analysis)
-  if (s.deep_analysis !== undefined) document.getElementById('deep-analysis').checked = s.deep_analysis;
-  else if (s['deep-analysis'] !== undefined) document.getElementById('deep-analysis').checked = s['deep-analysis'];
-
-  if (s.cheapFirst !== undefined) document.getElementById('cheap-first').checked = s.cheapFirst;
-  if (s.onlyNew !== undefined) document.getElementById('only-new').checked = s.onlyNew;
-  if (s.useGemini !== undefined) document.getElementById('use-gemini').checked = s.useGemini;
-
-  document.getElementById('deep-analysis').dispatchEvent(new Event('change'));
-
-  if (s.excludeWords && Array.isArray(s.excludeWords)) {
-    document.getElementById('exclude-words').value = s.excludeWords.join(', ');
-  }
-
-  if (s.limit) {
-    selectedLimit = s.limit;
-    document.querySelectorAll('.limit-btn').forEach(b => {
-      b.classList.toggle('active', parseInt(b.dataset.value) === s.limit);
-    });
-  }
-
-  if (s.autoSchedule !== undefined) {
-    document.getElementById('auto-schedule').value = s.autoSchedule;
-    updateWaScheduleStatus(parseInt(s.autoSchedule));
-  }
-}
-
-function updateWaScheduleStatus(minutes) {
-  const el = document.getElementById('schedule-status');
-  if (!el) return;
-  if (minutes === 0) {
-    el.textContent = 'Автозапуск выключен';
-    el.style.color = 'var(--muted)';
-  } else {
-    const labels = {30: '30 мин', 60: '1 час', 180: '3 часа', 720: '12 часов', 1440: '24 часа'};
-    el.textContent = `✓ Запуск каждые ${labels[minutes] || minutes + ' мин'}`;
-    el.style.color = 'var(--success)';
-  }
-}
-
-document.getElementById('auto-schedule').addEventListener('change', () => {
-  updateWaScheduleStatus(parseInt(document.getElementById('auto-schedule').value));
+const defaultQuerySettings = () => ({
+  query: '',
+  city: '',
+  priceMin: 0,
+  priceMax: 999999,
+  limit: 50,
+  pages: 3,
+  filterDelivery: false,
+  filterRating: false,
+  cheapFirst: false,
+  onlyNew: true,
+  excludeWords: [],
 });
 
-if (tg && tg.CloudStorage) {
-  tg.CloudStorage.getItem('avito_settings', (err, val) => {
-    if (!err && val) {
-      try { applySettings(JSON.parse(val)); } catch(e) {}
-    }
-  });
-} else {
+const defaultCommon = () => ({
+  deep_analysis: true,
+  useVless: true,
+  useGemini: true,
+  geminiKey: '',
+  autoSchedule: 0,
+});
+
+let tabs = [defaultQuerySettings()];
+let activeTab = 0;
+let commonSettings = defaultCommon();
+let isRunning = false;
+
+// ─── Загрузка сохранённых настроек ───────────────────────────────────────────
+function loadSaved() {
   try {
-    const saved = localStorage.getItem('avito_settings');
-    if (saved) applySettings(JSON.parse(saved));
+    const raw = localStorage.getItem('avito_parser_v3');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (Array.isArray(data.tabs) && data.tabs.length > 0) {
+      tabs = data.tabs.slice(0, MAX_TABS).map(t => ({...defaultQuerySettings(), ...t}));
+    }
+    if (data.common) {
+      commonSettings = {...defaultCommon(), ...data.common};
+    }
   } catch(e) {}
 }
 
-function collectSettings() {
-  const limit = selectedLimit;
-  const pages = Math.min(Math.ceil(limit / 50), 30);
+function saveToStorage() {
+  try {
+    saveCurrentTabFromUI();
+    saveCommonFromUI();
+    localStorage.setItem('avito_parser_v3', JSON.stringify({tabs, common: commonSettings}));
+  } catch(e) {}
+}
 
-  return {
+// ─── Вкладки ─────────────────────────────────────────────────────────────────
+function renderTabs() {
+  const wrap = document.getElementById('tabs-wrap');
+  const addBtn = document.getElementById('tab-add-btn');
+
+  // Удаляем все вкладки (кроме кнопки +)
+  [...wrap.querySelectorAll('.tab-btn')].forEach(el => el.remove());
+
+  tabs.forEach((tab, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i === activeTab ? ' active' : '');
+    btn.innerHTML = `
+      <span class="tab-label">${tab.query ? escapeHtml(tab.query.slice(0, 14)) : 'Запрос ' + (i+1)}</span>
+      ${tabs.length > 1 ? `<span class="tab-close" data-tab="${i}">×</span>` : ''}
+    `;
+    btn.addEventListener('click', (e) => {
+      if (e.target.classList.contains('tab-close')) return;
+      switchTab(i);
+    });
+    const closeEl = btn.querySelector('.tab-close');
+    if (closeEl) {
+      closeEl.addEventListener('click', (e) => { e.stopPropagation(); removeTab(parseInt(e.target.dataset.tab)); });
+    }
+    wrap.insertBefore(btn, addBtn);
+  });
+
+  addBtn.disabled = tabs.length >= MAX_TABS;
+}
+
+function switchTab(i) {
+  saveCurrentTabFromUI();
+  activeTab = i;
+  loadTabToUI();
+  renderTabs();
+}
+
+function addTab() {
+  if (tabs.length >= MAX_TABS) return;
+  saveCurrentTabFromUI();
+  tabs.push(defaultQuerySettings());
+  activeTab = tabs.length - 1;
+  loadTabToUI();
+  renderTabs();
+}
+
+function removeTab(i) {
+  if (tabs.length <= 1) return;
+  saveCurrentTabFromUI();
+  tabs.splice(i, 1);
+  if (activeTab >= tabs.length) activeTab = tabs.length - 1;
+  loadTabToUI();
+  renderTabs();
+}
+
+// ─── Чтение/запись UI ─────────────────────────────────────────────────────────
+function saveCurrentTabFromUI() {
+  if (activeTab >= tabs.length) return;
+  const pmin = parseInt(document.getElementById('price-min').value) || 0;
+  const pmax = parseInt(document.getElementById('price-max').value) || 999999;
+  const excl = document.getElementById('exclude-words').value.trim();
+
+  tabs[activeTab] = {
     query: document.getElementById('query').value.trim(),
     city: document.getElementById('city').value.trim(),
-    priceMin: parseInt(document.getElementById('price-min').value) || 0,
-    priceMax: parseInt(document.getElementById('price-max').value) || 999999,
-    excludeWords: document.getElementById('exclude-words').value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
-    includeWords: [],
+    priceMin: pmin,
+    priceMax: pmax,
+    limit: getActiveBtn('limit-grid'),
+    pages: getActiveBtn('pages-grid'),
     filterDelivery: document.getElementById('filter-delivery').checked,
-    filterReserved: true,
     filterRating: document.getElementById('filter-rating').checked,
-    minRating: 4.5,
-    useGemini: document.getElementById('use-gemini').checked,
-    geminiKey: document.getElementById('gemini-key').value.trim(),
-    deep_analysis: document.getElementById('deep-analysis').checked, // Исправлено на нижнее подчеркивание
     cheapFirst: document.getElementById('cheap-first').checked,
     onlyNew: document.getElementById('only-new').checked,
-    limit,
-    pages,
+    excludeWords: excl ? excl.split(',').map(w => w.trim()).filter(Boolean) : [],
+  };
+}
+
+function loadTabToUI() {
+  const tab = tabs[activeTab] || defaultQuerySettings();
+  document.getElementById('query').value = tab.query || '';
+  document.getElementById('city').value = tab.city || '';
+  document.getElementById('price-min').value = tab.priceMin > 0 ? tab.priceMin : '';
+  document.getElementById('price-max').value = tab.priceMax < 999999 ? tab.priceMax : '';
+  document.getElementById('filter-delivery').checked = tab.filterDelivery || false;
+  document.getElementById('filter-rating').checked = tab.filterRating || false;
+  document.getElementById('cheap-first').checked = tab.cheapFirst || false;
+  document.getElementById('only-new').checked = tab.onlyNew !== false;
+  document.getElementById('exclude-words').value = (tab.excludeWords || []).join(', ');
+  setActiveBtn('limit-grid', tab.limit || 50);
+  setActiveBtn('pages-grid', tab.pages || 3);
+  updateToggleRows();
+}
+
+function saveCommonFromUI() {
+  commonSettings = {
+    deep_analysis: document.getElementById('deep-analysis').checked,
+    useVless: document.getElementById('use-vless').checked,
+    useGemini: document.getElementById('use-gemini').checked,
+    geminiKey: document.getElementById('gemini-key').value.trim(),
     autoSchedule: parseInt(document.getElementById('auto-schedule').value) || 0,
   };
 }
 
-document.querySelectorAll('.limit-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.limit-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    selectedLimit = parseInt(btn.dataset.value);
+function loadCommonToUI() {
+  const c = commonSettings;
+  document.getElementById('deep-analysis').checked = c.deep_analysis !== false;
+  document.getElementById('use-vless').checked = c.useVless !== false;
+  document.getElementById('use-gemini').checked = c.useGemini !== false;
+  document.getElementById('gemini-key').value = c.geminiKey || '';
+  document.getElementById('auto-schedule').value = String(c.autoSchedule || 0);
+}
+
+// ─── Кнопки лимита/страниц ───────────────────────────────────────────────────
+function getActiveBtn(gridId) {
+  const active = document.querySelector(`#${gridId} .limit-btn.active`);
+  return active ? parseInt(active.dataset.v) : (gridId === 'limit-grid' ? 50 : 3);
+}
+
+function setActiveBtn(gridId, val) {
+  const btns = document.querySelectorAll(`#${gridId} .limit-btn`);
+  let found = false;
+  btns.forEach(btn => {
+    const match = parseInt(btn.dataset.v) === val;
+    btn.classList.toggle('active', match);
+    if (match) found = true;
+  });
+  if (!found && btns.length > 0) btns[1]?.classList.add('active');
+}
+
+['limit-grid', 'pages-grid'].forEach(gridId => {
+  document.getElementById(gridId).addEventListener('click', e => {
+    if (!e.target.classList.contains('limit-btn')) return;
+    document.querySelectorAll(`#${gridId} .limit-btn`).forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    renderTabs();
   });
 });
 
-document.querySelectorAll('.toggle-row').forEach(row => {
-  const cb = row.querySelector('input[type="checkbox"]');
-  if (cb) {
-    cb.addEventListener('change', () => {
-      row.classList.toggle('active', cb.checked);
-    });
-    if (cb.checked) row.classList.add('active');
-  }
-});
-
-document.getElementById('deep-analysis').addEventListener('change', function() {
-  const cityHint = document.getElementById('city-hint');
-  if (cityHint) cityHint.style.display = this.checked ? 'none' : 'block';
-});
-
-if (!document.getElementById('deep-analysis').checked) {
-  document.getElementById('deep-analysis').dispatchEvent(new Event('change'));
+// ─── Toggle row visual ───────────────────────────────────────────────────────
+function updateToggleRows() {
+  document.querySelectorAll('.toggle-row').forEach(row => {
+    const cb = row.querySelector('input[type=checkbox]');
+    if (cb) row.classList.toggle('active', cb.checked);
+  });
 }
 
-document.getElementById('btn-run').addEventListener('click', async () => {
-  const settings = collectSettings();
+document.querySelectorAll('.toggle input').forEach(inp => {
+  inp.addEventListener('change', () => {
+    updateToggleRows();
+    if (inp.id === 'query') renderTabs();
+  });
+});
 
-  if (!settings.query) {
-    toast('Введи поисковый запрос!', true);
+// Обновляем вкладку при изменении поля query
+document.getElementById('query').addEventListener('input', () => {
+  if (tabs[activeTab]) tabs[activeTab].query = document.getElementById('query').value.trim();
+  renderTabs();
+});
+
+// ─── Кнопка + ────────────────────────────────────────────────────────────────
+document.getElementById('tab-add-btn').addEventListener('click', addTab);
+
+// ─── Запуск ──────────────────────────────────────────────────────────────────
+document.getElementById('btn-run').addEventListener('click', () => {
+  saveCurrentTabFromUI();
+  saveCommonFromUI();
+
+  const validQueries = tabs.filter(t => t.query && t.query.trim());
+  if (validQueries.length === 0) {
+    showToast('Введи поисковый запрос!', true);
     document.getElementById('query').focus();
     return;
   }
 
-  if (tg && tg.CloudStorage) {
-    tg.CloudStorage.setItem('avito_settings', JSON.stringify(settings));
-  }
-
-  try {
-    localStorage.setItem('avito_settings', JSON.stringify(settings));
-  } catch(e) {}
-
-  const payload = JSON.stringify({
-    action: 'start',
-    settings: settings
-  });
-
-  if (tg && tg.sendData) {
-    try {
-      tg.sendData(payload);
-      return;
-    } catch(e) {
-      console.log('sendData failed');
-    }
-  }
-
-  if (tg) {
-    toast('✅ Настройки сохранены! Отправь /run боту');
-    setTimeout(() => { if (tg.close) tg.close(); }, 1500);
+  if (!tg) {
+    showToast('Открой в Telegram!', true);
     return;
   }
 
-  toast('✅ Сохранено (debug mode)');
+  const payload = {
+    action: 'start',
+    queries: validQueries,
+    common: commonSettings,
+  };
+
+  saveToStorage();
+  tg.sendData(JSON.stringify(payload));
 });
 
-document.querySelectorAll('.limit-btn, .toggle input, .btn-run').forEach(el => {
-  el.addEventListener('click', () => {
-    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-  });
-});
+// ─── Вспомогательные ─────────────────────────────────────────────────────────
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
-setStatus('готов', 'connected');
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => { t.className = 'toast'; }, 2500);
+}
+
+// ─── Инициализация ───────────────────────────────────────────────────────────
+function init() {
+  loadSaved();
+  loadTabToUI();
+  loadCommonToUI();
+  renderTabs();
+  updateToggleRows();
+}
+
+init();
 </script>
 </body>
 </html>
