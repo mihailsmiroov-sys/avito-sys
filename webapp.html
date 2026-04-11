@@ -180,9 +180,6 @@
     .limit-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
     .limit-btn:active { transform: scale(.95); }
 
-    /* ─── Pages buttons ─── */
-    .pages-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 6px; }
-
     /* ─── Special sections ─── */
     .accent-section { border-radius: 10px; padding: 12px; }
     .gemini-sec { background: rgba(66,133,244,.06); border: 1px solid rgba(66,133,244,.2); }
@@ -350,22 +347,11 @@
   <div class="section">
     <div class="section-label">лимит объявлений</div>
     <div class="limit-grid" id="limit-grid">
-      <button class="limit-btn" data-v="25">25</button>
-      <button class="limit-btn active" data-v="50">50</button>
+      <button class="limit-btn" data-v="50">50</button>
       <button class="limit-btn" data-v="100">100</button>
-      <button class="limit-btn" data-v="150">150</button>
       <button class="limit-btn" data-v="200">200</button>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">страниц авито</div>
-    <div class="pages-grid" id="pages-grid">
-      <button class="limit-btn" data-v="1">1</button>
-      <button class="limit-btn" data-v="2">2</button>
-      <button class="limit-btn active" data-v="3">3</button>
-      <button class="limit-btn" data-v="5">5</button>
-      <button class="limit-btn" data-v="10">10</button>
+      <button class="limit-btn" data-v="300">300</button>
+      <button class="limit-btn active" data-v="500">500</button>
     </div>
   </div>
 
@@ -459,8 +445,7 @@ const defaultQuerySettings = () => ({
   city: '',
   priceMin: 0,
   priceMax: 999999,
-  limit: 50,
-  pages: 3,
+  limit: 500,
   filterDelivery: false,
   filterRating: false,
   cheapFirst: false,
@@ -571,7 +556,6 @@ function saveCurrentTabFromUI() {
     priceMin: pmin,
     priceMax: pmax,
     limit: getActiveBtn('limit-grid'),
-    pages: getActiveBtn('pages-grid'),
     filterDelivery: document.getElementById('filter-delivery').checked,
     filterRating: document.getElementById('filter-rating').checked,
     cheapFirst: document.getElementById('cheap-first').checked,
@@ -591,8 +575,7 @@ function loadTabToUI() {
   document.getElementById('cheap-first').checked = tab.cheapFirst || false;
   document.getElementById('only-new').checked = tab.onlyNew !== false;
   document.getElementById('exclude-words').value = (tab.excludeWords || []).join(', ');
-  setActiveBtn('limit-grid', tab.limit || 50);
-  setActiveBtn('pages-grid', tab.pages || 3);
+  setActiveBtn('limit-grid', tab.limit || 500);
   updateToggleRows();
 }
 
@@ -618,7 +601,7 @@ function loadCommonToUI() {
 // ─── Кнопки лимита/страниц ───────────────────────────────────────────────────
 function getActiveBtn(gridId) {
   const active = document.querySelector(`#${gridId} .limit-btn.active`);
-  return active ? parseInt(active.dataset.v) : (gridId === 'limit-grid' ? 50 : 3);
+  return active ? parseInt(active.dataset.v) : 500;
 }
 
 function setActiveBtn(gridId, val) {
@@ -632,13 +615,11 @@ function setActiveBtn(gridId, val) {
   if (!found && btns.length > 0) btns[1]?.classList.add('active');
 }
 
-['limit-grid', 'pages-grid'].forEach(gridId => {
-  document.getElementById(gridId).addEventListener('click', e => {
-    if (!e.target.classList.contains('limit-btn')) return;
-    document.querySelectorAll(`#${gridId} .limit-btn`).forEach(b => b.classList.remove('active'));
-    e.target.classList.add('active');
-    renderTabs();
-  });
+document.getElementById('limit-grid').addEventListener('click', e => {
+  if (!e.target.classList.contains('limit-btn')) return;
+  document.querySelectorAll('#limit-grid .limit-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  renderTabs();
 });
 
 // ─── Toggle row visual ───────────────────────────────────────────────────────
