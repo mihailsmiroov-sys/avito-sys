@@ -67,14 +67,11 @@
       background: var(--muted);
     }
     .status-pill.connected .dot { background: var(--success); box-shadow: 0 0 6px var(--success); }
-    .status-pill.running .dot { background: var(--accent); animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
 
     /* Body */
     .content { padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
 
     /* Section */
-    .section { }
     .section-label {
       font-size: 9px; text-transform: uppercase; letter-spacing: .14em;
       color: var(--muted); margin-bottom: 8px;
@@ -218,19 +215,6 @@
       transition: all .15s;
     }
     .btn-run:active { transform: scale(.97); box-shadow: 0 2px 10px rgba(0,212,170,.2); }
-    .btn-run:disabled {
-      background: var(--border); color: var(--muted);
-      box-shadow: none; cursor: not-allowed;
-    }
-
-    /* Key toggle */
-    .key-row { position: relative; }
-    .key-row input { padding-right: 40px; }
-    .key-toggle {
-      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; color: var(--muted);
-      cursor: pointer; font-size: 14px; padding: 4px;
-    }
 
     /* Toast */
     .toast {
@@ -244,7 +228,6 @@
     .toast.show { opacity: 1; }
     .toast.error { background: var(--danger); color: #fff; }
 
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 3px; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   </style>
@@ -267,7 +250,6 @@
 
 <div class="content">
 
-  <!-- ПОИСК -->
   <div class="section">
     <div class="section-label">поиск</div>
     <div class="field-group">
@@ -281,7 +263,6 @@
     </div>
   </div>
 
-  <!-- ЦЕНА -->
   <div class="section">
     <div class="section-label">цена</div>
     <div class="row-2">
@@ -296,7 +277,6 @@
     </div>
   </div>
 
-  <!-- ОСНОВНЫЕ ФИЛЬТРЫ -->
   <div class="section">
     <div class="section-label">фильтры</div>
 
@@ -346,7 +326,6 @@
     </div>
   </div>
 
-  <!-- GEMINI -->
   <div class="accent-section gemini-sec">
     <div class="sec-header">
       <div class="sec-header-left">
@@ -355,17 +334,18 @@
       </div>
       <label class="toggle"><input type="checkbox" id="use-gemini" checked><span class="slider"></span></label>
     </div>
-    <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5;">
-      API ключ вводится в расширении Chrome
+    
+    <div class="field-group" style="margin-top:12px;">
+      <label class="field-label" style="color: rgba(66,133,244,0.9);">API Ключ OpenRouter (sk-or-...)</label>
+      <input type="text" id="gemini-key" placeholder="Вставь ключ сюда..." autocomplete="off" style="border: 1px solid rgba(66,133,244,0.3); background: rgba(0,0,0,0.2);" />
     </div>
   </div>
 
-  <!-- РАСПИСАНИЕ -->
   <div class="accent-section schedule-sec">
     <div class="sec-header">
       <div class="sec-header-left">
         <span class="badge badge-schedule">⏰ РАСПИСАНИЕ</span>
-        <span class="sec-desc">автозапуск</span>
+        <span class="sec-desc">автозапуск парсера</span>
       </div>
     </div>
     <div style="margin-top:10px;">
@@ -381,7 +361,6 @@
     </div>
   </div>
 
-  <!-- ЛИМИТ -->
   <div class="section">
     <div class="section-label">сканирование</div>
     <label class="field-label">Объявлений для анализа</label>
@@ -396,35 +375,23 @@
 
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<!-- Bottom button -->
 <div class="bottom-bar">
-  <button class="btn-run" id="btn-run">▶ ЗАПУСТИТЬ ПАРСИНГ</button>
+  <button class="btn-run" id="btn-run">▶ СОХРАНИТЬ И ЗАПУСТИТЬ</button>
 </div>
 
 <script>
 const tg = window.Telegram?.WebApp;
 
-// Init Telegram WebApp
 if (tg) {
   tg.ready();
   tg.expand();
-  // Тема Telegram — оставляем свою тёмную
   document.documentElement.style.setProperty('--tg-theme-bg-color', '#0f0f13');
 }
 
-// =====================
-// STATE
-// =====================
-
 let currentSettings = {};
 let selectedLimit = 100;
-
-// =====================
-// UI HELPERS
-// =====================
 
 function toast(msg, isError = false) {
   const el = document.getElementById('toast');
@@ -440,10 +407,6 @@ function setStatus(text, type) {
   st.textContent = text;
 }
 
-// =====================
-// LOAD SETTINGS FROM BOT
-// =====================
-
 function applySettings(s) {
   if (!s) return;
   currentSettings = s;
@@ -452,17 +415,19 @@ function applySettings(s) {
   if (s.city) document.getElementById('city').value = s.city;
   if (s.priceMin) document.getElementById('price-min').value = s.priceMin;
   if (s.priceMax && s.priceMax < 999999) document.getElementById('price-max').value = s.priceMax;
+  if (s.geminiKey) document.getElementById('gemini-key').value = s.geminiKey;
 
   if (s.filterDelivery !== undefined) document.getElementById('filter-delivery').checked = s.filterDelivery;
   if (s.filterRating !== undefined) document.getElementById('filter-rating').checked = s.filterRating;
-  if (s['deep-analysis'] !== undefined) document.getElementById('deep-analysis').checked = s['deep-analysis'];
+  
+  // КРИТИЧЕСКИЙ ФИКС: Поддержка обоих вариантов написания (deep-analysis и deep_analysis)
+  if (s.deep_analysis !== undefined) document.getElementById('deep-analysis').checked = s.deep_analysis;
+  else if (s['deep-analysis'] !== undefined) document.getElementById('deep-analysis').checked = s['deep-analysis'];
+
   if (s.cheapFirst !== undefined) document.getElementById('cheap-first').checked = s.cheapFirst;
   if (s.onlyNew !== undefined) document.getElementById('only-new').checked = s.onlyNew;
-  if (s.useGemini !== undefined) {
-    document.getElementById('use-gemini').checked = s.useGemini;
-  }
+  if (s.useGemini !== undefined) document.getElementById('use-gemini').checked = s.useGemini;
 
-  // Применить состояние deep-analysis (блокировка зависимых тумблеров)
   document.getElementById('deep-analysis').dispatchEvent(new Event('change'));
 
   if (s.excludeWords && Array.isArray(s.excludeWords)) {
@@ -495,12 +460,10 @@ function updateWaScheduleStatus(minutes) {
   }
 }
 
-// Обновляем статус при смене select
 document.getElementById('auto-schedule').addEventListener('change', () => {
   updateWaScheduleStatus(parseInt(document.getElementById('auto-schedule').value));
 });
 
-// Пробуем загрузить из Telegram CloudStorage (персистентное хранилище)
 if (tg && tg.CloudStorage) {
   tg.CloudStorage.getItem('avito_settings', (err, val) => {
     if (!err && val) {
@@ -508,16 +471,11 @@ if (tg && tg.CloudStorage) {
     }
   });
 } else {
-  // Fallback: localStorage (для debug без Telegram)
   try {
     const saved = localStorage.getItem('avito_settings');
     if (saved) applySettings(JSON.parse(saved));
   } catch(e) {}
 }
-
-// =====================
-// COLLECT SETTINGS
-// =====================
 
 function collectSettings() {
   const limit = selectedLimit;
@@ -535,7 +493,8 @@ function collectSettings() {
     filterRating: document.getElementById('filter-rating').checked,
     minRating: 4.5,
     useGemini: document.getElementById('use-gemini').checked,
-    'deep-analysis': document.getElementById('deep-analysis').checked,
+    geminiKey: document.getElementById('gemini-key').value.trim(),
+    deep_analysis: document.getElementById('deep-analysis').checked, // Исправлено на нижнее подчеркивание
     cheapFirst: document.getElementById('cheap-first').checked,
     onlyNew: document.getElementById('only-new').checked,
     limit,
@@ -544,10 +503,6 @@ function collectSettings() {
   };
 }
 
-// =====================
-// LIMIT BUTTONS
-// =====================
-
 document.querySelectorAll('.limit-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.limit-btn').forEach(b => b.classList.remove('active'));
@@ -555,10 +510,6 @@ document.querySelectorAll('.limit-btn').forEach(btn => {
     selectedLimit = parseInt(btn.dataset.value);
   });
 });
-
-// =====================
-// TOGGLE ROWS
-// =====================
 
 document.querySelectorAll('.toggle-row').forEach(row => {
   const cb = row.querySelector('input[type="checkbox"]');
@@ -570,22 +521,14 @@ document.querySelectorAll('.toggle-row').forEach(row => {
   }
 });
 
-// Gemini toggle (без секции ключа — ключ в расширении)
-// Углублённый анализ — показываем подсказку к городу, НЕ трогаем доставку
 document.getElementById('deep-analysis').addEventListener('change', function() {
-  const on = this.checked;
   const cityHint = document.getElementById('city-hint');
-  if (cityHint) cityHint.style.display = on ? 'none' : 'block';
+  if (cityHint) cityHint.style.display = this.checked ? 'none' : 'block';
 });
 
-// Применить начальное состояние deep-analysis
 if (!document.getElementById('deep-analysis').checked) {
   document.getElementById('deep-analysis').dispatchEvent(new Event('change'));
 }
-
-// =====================
-// MAIN BUTTON — SEND TO BOT
-// =====================
 
 document.getElementById('btn-run').addEventListener('click', async () => {
   const settings = collectSettings();
@@ -596,12 +539,10 @@ document.getElementById('btn-run').addEventListener('click', async () => {
     return;
   }
 
-  // Сохраняем в CloudStorage (Telegram) — персистентно
   if (tg && tg.CloudStorage) {
     tg.CloudStorage.setItem('avito_settings', JSON.stringify(settings));
   }
 
-  // Fallback: localStorage
   try {
     localStorage.setItem('avito_settings', JSON.stringify(settings));
   } catch(e) {}
@@ -611,54 +552,30 @@ document.getElementById('btn-run').addEventListener('click', async () => {
     settings: settings
   });
 
-  // Способ 1: sendData (работает только через KeyboardButton)
   if (tg && tg.sendData) {
     try {
       tg.sendData(payload);
       return;
     } catch(e) {
-      console.log('sendData failed, trying close...');
+      console.log('sendData failed');
     }
   }
 
-  // Способ 2: закрываем с уведомлением
   if (tg) {
     toast('✅ Настройки сохранены! Отправь /run боту');
-    setTimeout(() => {
-      if (tg.close) tg.close();
-    }, 1500);
+    setTimeout(() => { if (tg.close) tg.close(); }, 1500);
     return;
   }
 
-  // Fallback: debug
-  console.log('Settings:', settings);
   toast('✅ Сохранено (debug mode)');
 });
 
-// =====================
-// Telegram MainButton (альтернатива)
-// =====================
-
-if (tg && tg.MainButton) {
-  // Не используем MainButton — у нас свой btn-run
-  // Но можно включить если нужно:
-  // tg.MainButton.setText('▶ ЗАПУСТИТЬ');
-  // tg.MainButton.show();
-}
-
-// =====================
-// HAPTIC FEEDBACK
-// =====================
-
 document.querySelectorAll('.limit-btn, .toggle input, .btn-run').forEach(el => {
   el.addEventListener('click', () => {
-    if (tg && tg.HapticFeedback) {
-      tg.HapticFeedback.impactOccurred('light');
-    }
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
   });
 });
 
-// Status
 setStatus('готов', 'connected');
 </script>
 </body>
